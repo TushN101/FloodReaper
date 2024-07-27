@@ -29,7 +29,6 @@ To install FloodReaper, follow these steps:
    ```bash
    python main.py
 
-
 ## Legality
 
 FloodReaper is designed for stress testing and educational purposes only. Unauthorized use of this tool for attacking networks or systems is illegal and unethical. The author is not responsible for any misuse or damage caused by this tool.
