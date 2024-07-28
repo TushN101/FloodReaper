@@ -15,7 +15,7 @@ To install FloodReaper, follow these steps:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/FloodReaper.git
+   git clone https://github.com/TushN101/FloodReaper.git
 
 2. **Navigate to Directory**
    ```bash
