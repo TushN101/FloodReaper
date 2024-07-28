@@ -21,9 +21,6 @@ To install FloodReaper, follow these steps:
    ```bash
    cd FloodReaper
 
-4. **Install required packages**
-   ```bash
-   pip install -r requirements.txt
 
 3. **Run the Script**
    ```bash
