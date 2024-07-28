@@ -21,7 +21,6 @@ To install FloodReaper, follow these steps:
    ```bash
    cd FloodReaper
 
-
 3. **Run the Script**
    ```bash
    python main.py
