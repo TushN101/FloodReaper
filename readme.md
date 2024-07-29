@@ -21,7 +21,11 @@ To install FloodReaper, follow these steps:
    ```bash
    cd FloodReaper
 
-3. **Run the Script**
+3. **Install Scapy**
+   ```bash
+   pip install scapy
+
+4. **Run the Script**
    ```bash
    python main.py
 
