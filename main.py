@@ -21,12 +21,11 @@ CEND = '\033[0m'
 CBLINK = '\33[5m'
 CYELLOW = '\033[33m' 
 
-conf.verb = 0
 is_dig_avail = False
 domain =  ''
 target_ip = '0.0.0.0'
 is_ip_hopping = False
-
+conf.verb = 0
 
 #--------------------------------------------------------------
 #SYSTEM CHECKS
@@ -49,25 +48,6 @@ def check_sys():
 
 # Checking if required tool is installed
 def is_tools_installed():
-    # Installing scapy
-    try:
-        result = subprocess.run([sys.executable, "-m", "pip", "show", "scapy"],capture_output=True, text=True)
-        if result.returncode == 0 and result.stdout.strip():
-            print(CGREEN + "  [\u2714] " + CEND + "The lib 'scapy' was successfully found.")
-        else:
-            print(CRED + "  [!] " + CEND + "The lib 'scapy' is not installed , Installing the library..." + CEND)
-            try:
-                install_result = subprocess.run([sys.executable, "-m", "pip", "install", "scapy"],capture_output=True, text=True)
-                if install_result.returncode == 0:
-                    print(CGREEN + "  [\u2714] " + CEND + "The lib 'scapy' was successfully installed.")
-                else:
-                    print(CRED + "  [!] " + CEND + f"Failed to install scapy.\n{install_result.stderr}")
-            except Exception as e:
-                print(CRED + "  [!] " + CEND + f"An error occurred during installation: {e}")
-    except Exception as e:
-        print(CRED + "  [!] " + CEND + f"An error occurred while checking for scapy: {e}")
-
-
     # Checking if dig tool is installed
     try:
         global is_dig_avail
@@ -242,6 +222,7 @@ def start_tor():
         time.sleep(3)
         try:
             print(CGREEN + "  [-] Starting the Tornet tool...\n" + CEND)
+            print(CYELLOW + "  [?] " + CEND + "This feature is currently disabled due to code issues. Please manually start Tornet in a separate window.\n" + CEND)
             #tornet = subprocess.Popen(['sudo', 'tornet', '--interval', '5', '--count', '0'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             # Wait for ten seconds
             time.sleep(10)
@@ -521,9 +502,6 @@ def dns_amp():
     for t in threads_list:
         t.join()
 
-def invalid():
-    print(CGREEN + "\n\n[:/] " + CEND + "Scripts arent uploaded for the following attack | Exiting...." + CEND)
-    sys.exit(0)
 #------------------------------------------------------------------
 
 
@@ -539,17 +517,15 @@ def dashboard():
     print(CGREEN + "  [0] " + CEND + "Start TOR Service [IP Hopping]\n" + CEND)
     print(CGREEN + "  [1] " + CEND +"SYN FLOOD ATTACK" + CEND)
     print(CGREEN + "  [2] " + CEND +"HTTP GET FLOOD ATTACK" +CEND) 
-    print(CYELLOW + "  [3] " + "UDP FLOOD ATTACK" + CEND)
-    print(CGREEN + "  [4] " + CEND +"SLOWLORIS ATTACK" + CEND)
-    print(CGREEN + "  [5] " + CEND +"IP FRAGMENTATION ATTACK" + CEND)
-    print(CGREEN + "  [6] " + CEND +"DNS AMPLIFICATION ATTACK" + CEND)
-    print(CYELLOW + "  [7] " + "GOLDEN EYE ATTACK\n" + CEND)
-    print(CGREEN + "  [8] " + CEND + "Exit" + CEND)
-    choice = input(CGREEN + "\n[-] Enter your choice [0-8]: " + CEND)
+    print(CGREEN + "  [3] " + CEND +"SLOWLORIS ATTACK" + CEND)
+    print(CGREEN + "  [4] " + CEND +"IP FRAGMENTATION ATTACK" + CEND)
+    print(CGREEN + "  [5] " + CEND +"DNS AMPLIFICATION ATTACK\n" + CEND)
+    print(CGREEN + "  [6] " + CEND + "Exit" + CEND)
+    choice = input(CGREEN + "\n[-] Enter your choice [0-6]: " + CEND)
     
     # Additional error handling for invalid choices
-    if choice not in ['0','1', '2', '3', '4', '5', '6', '7','8']:
-        print(CRED + "[!] Invalid choice. Please select a number between 1 and 7." + CEND)
+    if choice not in ['0','1', '2', '3', '4', '5', '6']:
+        print(CRED + "[!] Invalid choice. Please select a number between 0 and 6." + CEND)
         sys.exit(0)
     elif choice=='0':
         start_tor()
@@ -557,15 +533,13 @@ def dashboard():
         syn_flood()
     elif choice=='2':
         http_flood()
-    elif choice=='3' or choice=='7':
-        invalid()
-    elif choice=='4':
+    elif choice=='3':
         slowloris_attack()
-    elif choice=='5':
+    elif choice=='4':
         ip_frag()
-    elif choice=='6':
+    elif choice=='5':
         dns_amp()
-    elif choice=='8':
+    elif choice=='6':
         exit()
 
 def main():
