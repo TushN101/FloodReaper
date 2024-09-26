@@ -1,7 +1,8 @@
 """
 DDOS Stress Testing Tool
 
-This tool provides multiple attack options for stress testing networks.
+This tool provides multiple attack options such as SYN FLOOD ATTACK, HTTP GET FLOOD ATTACK, UDP FLOOD ATTACK, SLOWLORIS ATTACK, IP FRAGMENTATION ATTACK, DNS AMPLIFICATION ATTACK, GOLDEN EYE ATTACK
+ for stress testing networks.
 Developed collaboratively by the DDOS team at DeepCytes.
 Contributions are welcomed and appreciated.
 
