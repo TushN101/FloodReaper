@@ -1,7 +1,7 @@
 """
 DDOS Stress Testing Tool
 
-This tool provides multiple attack options for stress testing networks.
+This tool provides multiple attack options such as Slowloris attack, HTTP flood, SYN Flood etc. for stress testing networks.
 Developed collaboratively by the DDOS team at DeepCytes.
 Contributions are welcomed and appreciated.
 
